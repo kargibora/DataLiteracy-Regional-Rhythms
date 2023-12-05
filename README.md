@@ -8,6 +8,35 @@ Exploratory data analysis on the Spotify Audio features, leveraging data from th
 
 ---
 ## Installation
+After installing the repository, please adjust the folder structure as follows by moving dataset files into the `dataset` folder.:
+```
+Data Literacy Project
+├── dataset
+│   ├── audio_features.csv
+│   ├── charts_preprocessed.csv
+|   └─────────────────
+├── env
+├── .gitignore
+├── requirements.txt
+├── README.md
+└── source
+    ├── database_wrapper
+    │   ├── __init__.py
+    │   └── spotify_charts.py
+    ├── spotify_wrapper
+    │   ├── __init__.py
+    │   └── spotify_wrapper.py
+    ├── eda.py
+    ├── main.py
+    ├── preprocessing.py
+    ├── notebooks
+    │   └── notebooks for data exploration
+    └─────────────────
+```
+
+If you want to run the scripts to collect data from Spotify API, please create a `.env` file in the ```source``` directory and add your Spotify API key.
+
+
 ## About
 Our work explores the dynamic landscape of global music preferences using data from the [Spotify Charts Dataset](https://www.kaggle.com/datasets/dhruvildave/spotify-charts) and [Spotify API](https://developer.spotify.com/documentation/web-api). By examining the top charting songs across various regions over a specified period, we aim to uncover patterns and correlations between regional popularity and the intrinsic features of the music, such as but not limited to danceability, energy, and loudness. The dataset includes key information such as dates, regions, and rankings, providing a comprehensive view of the shifting trends in music consumption worldwide. 
 Our analysis is expected to provide valuable insights for artists, record labels, and marketers, helping them tailor their approaches based on regional preferences and the distinct audio features of popular music. Additionally, this study contributes to the academic understanding of cultural diversity in music, anticipating a wide variety of musical tastes and unique characteristics across different regions.
