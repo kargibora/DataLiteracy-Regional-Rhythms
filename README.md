@@ -44,7 +44,7 @@ Our analysis is expected to provide valuable insights for artists, record labels
 ---
 
 Collaborators:
-- Oğuz Ata Çal
+- [Oğuz Ata Çal](https://github.com/OguzAtaCal)
 - [Bora Kargı](https://github.com/Neroxn)
 - [Karahan Sarıtaş](https://github.com/KarahanS)
 - [Kıvanç Tezören](https://github.com/kivanctezoren)
