@@ -11,27 +11,32 @@ Exploratory data analysis on the Spotify Audio features, leveraging data from th
 After installing the repository, please adjust the folder structure as follows by moving dataset files into the `dataset` folder.:
 ```
 Data Literacy Project
-├── dataset
+├── data
 │   ├── audio_features.csv
 │   ├── charts_preprocessed.csv
 |   └─────────────────
 ├── env
+├── exp
+│   ├── data_audio_features.ipynb
+│   ├── data_exploration.ipynb
+│   ├── data_feature_vectors.ipynb
+│   ├── data_rank_analysis.ipynb
+│   ├── data_regional_correlation.ipynb
+│   ├── data_regional_correlation_plots.ipynb
+│   ├── data_regional_correlations.ipynb
+│   ├── data_visualization.ipynb
+│   └─────────────────
+├── figures
+├── output
+├── source
+│   ├── utils
+│   ├── .env
+│   ├── build_dataset.py
+│   └─────────────────
 ├── .gitignore
 ├── requirements.txt
 ├── README.md
-└── source
-    ├── database_wrapper
-    │   ├── __init__.py
-    │   └── spotify_charts.py
-    ├── spotify_wrapper
-    │   ├── __init__.py
-    │   └── spotify_wrapper.py
-    ├── eda.py
-    ├── main.py
-    ├── preprocessing.py
-    ├── notebooks
-    │   └── notebooks for data exploration
-    └─────────────────
+└─────────────────
 ```
 
 If you want to run the scripts to collect data from Spotify API, please create a `.env` file in the ```source``` directory and add your Spotify API key.
@@ -51,4 +56,4 @@ Collaborators:
 
 ---
 This project is a component of the *ML-4102 Data Literacy* course, instructed by Philipp Henning in the winter of 2023.
-> This course provides students with essential concepts and tools for working with large datasets, covering practical experiments and examples to discuss common pitfalls and best practices. It addresses basic statistical notions, bias, testing, and experimental design, while employing foundational methods of machine learning and statistical data analysis.
+> This course provides students with essential concepts and tools for working with large datasets, covering practical experiments and examples to discuss common pitfalls and best practices. It addresses basic statistical notions, bias, testing, and experimental design while employing foundational methods of machine learning and statistical data analysis.
