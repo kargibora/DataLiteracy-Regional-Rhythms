@@ -9,6 +9,21 @@ import tqdm
 from .charts import get_charts_by_date, get_charts_by_region
 from .datetime import datetime_start_end_generator
 
+def _assert_regional_df(df : pd.DataFrame):
+    assert 'region' in df.columns, "The dataframe should have a 'region' column"
+    assert 'date' in df.columns, "The dataframe should have a 'date' column"
+    assert 'track_id' in df.columns, "The dataframe should have a 'track_id' column"
+    assert 'streams' in df.columns, "The dataframe should have a 'streams' column"
+    assert 'rank' in df.columns, "The dataframe should have a 'rank' column"
+    assert df['region'].nunique() == 1, "The regional dataframe should be filtered by a single region"
+
+def assert_regional_wrapper(func):
+    def wrapper(*args, **kwargs):
+        _assert_regional_df(args[0])
+        return func(*args, **kwargs)
+    return wrapper
+
+@assert_regional_wrapper
 def get_regional_charts_delta_rank(regional_df : pd.DataFrame,
                                    date : Union[str, Tuple[str,str]],
                                    operation : str = 'sum',
@@ -46,13 +61,15 @@ def get_regional_charts_delta_rank(regional_df : pd.DataFrame,
     df_group = df_group.sort_values(by=['streams'], ascending=False).reset_index()
 
     # Assign the new rankings
-    df_group['rank'] = df_group.index + 1
-
+    df_group['delta_rank'] = df_group.index + 1
+    df_group.drop(columns=['rank'], inplace=True)
+    
     # Merge the two dataframes to get the title and artist
-    df_group = df_group.merge(df, on='track_id', how='left')
+    df_group = df_group.merge(df.drop(columns=['rank','streams']), on='track_id', how='left')
 
     # Remove duplicates will look same after we merge the two dataframes
     df_group = df_group.drop_duplicates(subset=['track_id'])
+
 
     # Normalize the streams between 0 and 1
     if normalize_streams:
@@ -60,6 +77,7 @@ def get_regional_charts_delta_rank(regional_df : pd.DataFrame,
 
     return df_group
 
+@assert_regional_wrapper
 def calculate_regional_popularity(regional_df : pd.DataFrame, delta_k : int = 10):
     """
     Given the regional dataframe, calculate the popularity score of each track. If weight for each track_id is given,
@@ -72,16 +90,17 @@ def calculate_regional_popularity(regional_df : pd.DataFrame, delta_k : int = 10
         track_df = regional_df[regional_df['track_id'] == track_id]
 
         # Calculate the popularity scores.
-        print(track_id)
         score = track_df[track_df["rank"] <= delta_k].shape[0]
 
         # Popularity is the score weighted by the average rank
-        print(track_id,score)
         popularities[track_id] = score 
 
     return popularities
 
-def calculate_popularity_metrics(charts_df: pd.DataFrame, region: str, date_range: Tuple[str, str], delta_k: int) -> pd.DataFrame:
+@assert_regional_wrapper
+def calculate_popularity_metrics(regional_df : pd.DataFrame,
+                                 date : Tuple[str, str],
+                                 delta_k: int = 200) -> pd.DataFrame:
     """
     Calculate popularity metrics for tracks within a specific region and date range.
     
@@ -102,9 +121,9 @@ def calculate_popularity_metrics(charts_df: pd.DataFrame, region: str, date_rang
         >>> calculate_popularity_metrics(charts_df, 'United States', ('2017-01-01', '2019-12-31'), 25)
     """
     # Filter the DataFrame for the given region and date range
-    regional_df = get_charts_by_region(charts_df, region, False)
-    date_filtered_df = get_charts_by_date(regional_df, date_range)
-    
+    date_filtered_df = get_charts_by_date(regional_df, date)
+    region = regional_df['region'].unique()[0]
+
     # Calculate stream proportion for each day
     date_filtered_df['stream_proportion'] = date_filtered_df.groupby('date')['streams'].transform(lambda x: x / x.sum())
     
@@ -113,7 +132,7 @@ def calculate_popularity_metrics(charts_df: pd.DataFrame, region: str, date_rang
     stream_proportion_average = {}
     
     # Calculate popularity and stream proportion average for each track
-    for track_id in tqdm.tqdm(date_filtered_df['track_id'].unique(), desc=f"Calculating metrics for {region}"):
+    for track_id in tqdm.tqdm(date_filtered_df['track_id'].unique(), desc=f"Calculating metrics for {region} between {date[0]} and {date[1]}"):
         track_df = date_filtered_df[date_filtered_df['track_id'] == track_id]
         score = track_df[track_df["rank"] <= delta_k].shape[0]
         stream_proportion_average[track_id] = track_df[track_df["rank"] <= delta_k]['stream_proportion'].mean() if score > 0 else 0
@@ -124,3 +143,18 @@ def calculate_popularity_metrics(charts_df: pd.DataFrame, region: str, date_rang
     date_filtered_df['average_stream_proportion'] = date_filtered_df['track_id'].map(stream_proportion_average)
     
     return date_filtered_df
+
+@assert_regional_wrapper
+def calculate_popularity_metrics_delta(
+        regional_df : pd.DataFrame,
+        date_range : Tuple[str, str],
+        delta_k : int,
+        delta_t : int = 6,
+):
+    datetime_generator =  datetime_start_end_generator(date_range[0], date_range[1], delta_t)
+    weekly_dict = {}
+    for start_date, end_date in datetime_generator:
+        weekly_popularity = calculate_popularity_metrics(regional_df, (start_date, end_date), delta_k)
+        weekly_popularity['weighted_popularity'] = weekly_popularity['popularity'] * weekly_popularity['average_stream_proportion']
+        weekly_dict[start_date] = weekly_popularity
+    return weekly_dict

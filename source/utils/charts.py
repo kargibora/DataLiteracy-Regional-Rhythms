@@ -1,3 +1,7 @@
+"""
+This utility file includes some functions to filter the charts dataframe.
+"""
+
 from typing import Union, Tuple, List, Optional, Dict
 import pandas as pd
 

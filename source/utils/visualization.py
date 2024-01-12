@@ -95,6 +95,8 @@ def plot_correlation_heatmap(df, features, title="Correlation Heatmap", half=Fal
     plt.show()
 
 
+
+
 def save_current_plot(filename):
     """
     Save the current plot to the specified filename.
@@ -103,3 +105,4 @@ def save_current_plot(filename):
         filename (str): The filename to save the plot to.
     """
     plt.savefig(os.path.join(SAVE_DIR,filename), bbox_inches='tight')
+
