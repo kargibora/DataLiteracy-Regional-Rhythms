@@ -1,6 +1,9 @@
+# Plotting libraries
 import matplotlib.pyplot as plt
 import seaborn as sns
 from tueplots import bundles
+from tueplots.constants.color import rgb
+
 import pandas as pd
 import numpy as np
 import os
@@ -11,16 +14,23 @@ from typing import List, Tuple
 from .regions import get_charts_by_region, get_regional_charts_delta_rank,calculate_popularity_metrics
 from .tracks import get_track_title
 
-plt.rcParams.update(bundles.beamer_moml())
-
-# Update the font
-plt.rcParams["font.family"] = "serif"
-
-# Update the plt savefig path
 SAVE_DIR = '../../figures/'
-plt.rcParams['savefig.dpi'] = 300
-plt.rcParams['savefig.format'] = 'jpg'
-plt.rcParams["savefig.directory"] = SAVE_DIR
+
+
+def setup_plotting_icml2022(**bundles_kwargs):
+    """
+    Set up the plotting environment.
+    """
+    
+    plt.rcParams.update(bundles.icml2022(
+        **bundles_kwargs,
+    ))
+
+    # Update the plt savefig path
+    plt.rcParams['savefig.dpi'] = 300
+    plt.rcParams['savefig.format'] = '.pdf'
+    plt.rcParams["savefig.directory"] = SAVE_DIR
+
 
 def plot_multiple_tracks_time_series(dfs, x_column, y_column, labels, title='Time Series Plot', xlabel='Date', ylabel='Value', ax=None, marker_every=5):
     """
