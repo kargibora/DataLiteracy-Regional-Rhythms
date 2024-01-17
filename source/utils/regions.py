@@ -3,8 +3,9 @@ This utility file contains functions to work with regional dataframes.
 Regional dataframes is defined as the chart dataframe that is filtered by a single region.
 """
 
-from typing import Union, Tuple, Optional, Dict
+from typing import Union, Tuple, Optional, Dict, List, Any
 import pandas as pd
+import numpy as np
 import tqdm
 from .charts import get_charts_by_date, get_charts_by_region
 from .datetime import datetime_start_end_generator
@@ -23,37 +24,30 @@ def assert_regional_wrapper(func):
         return func(*args, **kwargs)
     return wrapper
 
-@assert_regional_wrapper
-def get_regional_charts_delta_rank(regional_df : pd.DataFrame,
-                                   date : Union[str, Tuple[str,str]],
-                                   operation : str = 'sum',
-                                   normalize_streams : bool = True) -> pd.DataFrame:
+def get_regional_weekly_charts_ranking(df : pd.DataFrame, date : Union[str, Tuple[str,str]], operation : str = 'sum', normalize_streams : bool = True) -> pd.DataFrame:
     """
-    Transform daily data to weekly data by summing or averaging the streams. Delta rank is defined as
-    the ranking of a track between a date range.  Use :operation: to specify whether to sum or average
-    the streams. Use :normalize_streams: to normalize the streams between 0 and 1.
+    Transform daily data into weekly data. Rearange the rankings by getting the mean of streams and assigning a
+    new ranking based on the mean. 
 
     Parameters:
         df (pd.DataFrame): The dataframe to filter. Should be the charts dataframe
         date (str or tuple): The date or the tuple of dates to filter the dataframe
         operation (str): The operation to perform on the streams. Either 'mean' or 'sum'
-        normalize_streams (bool): Whether to normalize the streams between 0 and 1
 
     Returns:
         pd.DataFrame: The filtered dataframe
-
-    Note:
-    - This function should be used for a region subset of the dataframe.
     """
-
-
     # This should be a view and should not change the original df
-    df = regional_df.copy()
+    df = df.copy()
     df = get_charts_by_date(df, date)
+
+    temp_df = df[['track_id', 'streams']].copy()
+
+
     if operation == 'mean':
-        df_group = df.groupby(['track_id']).mean().reset_index()
+        df_group = temp_df.groupby(['track_id']).mean().reset_index()
     elif operation == 'sum':
-        df_group = df.groupby(['track_id']).sum().reset_index()
+        df_group = temp_df.groupby(['track_id']).sum().reset_index()
     else:
         raise ValueError("Operation should be either 'mean' or 'sum'")
     
@@ -61,15 +55,16 @@ def get_regional_charts_delta_rank(regional_df : pd.DataFrame,
     df_group = df_group.sort_values(by=['streams'], ascending=False).reset_index()
 
     # Assign the new rankings
-    df_group['delta_rank'] = df_group.index + 1
-    df_group.drop(columns=['rank'], inplace=True)
-    
-    # Merge the two dataframes to get the title and artist
-    df_group = df_group.merge(df.drop(columns=['rank','streams']), on='track_id', how='left')
+    df_group['rank'] = df_group.index + 1
+
+    # Merge the two dataframes so that df_group also include title, artist, region
+    df_group = df_group.merge(df[['track_id', 'title', 'artist', 'region']], on='track_id', how='left')
 
     # Remove duplicates will look same after we merge the two dataframes
     df_group = df_group.drop_duplicates(subset=['track_id'])
 
+    df_group["start_date"] = date[0] if isinstance(date,tuple) else date
+    df_group["end_date"] = date[1] if isinstance(date,tuple) else date
 
     # Normalize the streams between 0 and 1
     if normalize_streams:
@@ -143,6 +138,42 @@ def calculate_popularity_metrics(regional_df : pd.DataFrame,
     date_filtered_df['average_stream_proportion'] = date_filtered_df['track_id'].map(stream_proportion_average)
     
     return date_filtered_df
+
+def get_region_influence_ranking(similarity_matrix : np.ndarray, regions : List[str]) -> pd.DataFrame:
+    """
+    Calculate the influence of each region based on the similarity matrix.
+
+    Parameters:
+        similarity_matrix (np.ndarray): The similarity matrix for the regions. The shape should be (num_dates, num_regions, num_regions).
+        regions (List[str]): The list of regions.
+    
+    Returns:
+        pd.DataFrame: The dataframe containing the region and influence.
+    """
+
+    # create the dataframe
+    df = pd.DataFrame(columns=['region', 'influence'])
+    # create the region array
+    region_array = np.array(regions)
+    # create the region influence array
+    region_influence_array = np.zeros(len(regions))
+
+    # calculate the mean of the similarity matrix across the dates
+    similarity_matrix_mean = np.mean(similarity_matrix, axis=0)
+
+    # calculate the influence for each region but skip the diagonal
+    for i in range(similarity_matrix_mean.shape[0]):
+        # calculate the influence for the region
+        region_influence = np.sum(similarity_matrix_mean[i, :]) - similarity_matrix_mean[i, i]
+        # add the influence to the region influence array
+        region_influence_array[i] = region_influence
+
+    # assign the values to the dataframe
+    df['region'] = region_array
+    df['influence'] = region_influence_array
+    # sort the dataframe by the influence
+    df = df.sort_values(by=['influence'], ascending=False).reset_index(drop=True)
+    return df
 
 @assert_regional_wrapper
 def calculate_popularity_metrics_delta(

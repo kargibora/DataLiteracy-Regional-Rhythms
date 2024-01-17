@@ -5,6 +5,8 @@ import pandas as pd
 import numpy as np
 import os
 import tqdm
+import matplotlib.dates as mdates
+from typing import Union, Tuple, List, Optional, Dict, Any
 
 plt.rcParams.update(bundles.beamer_moml())
 
@@ -95,7 +97,59 @@ def plot_correlation_heatmap(df, features, title="Correlation Heatmap", half=Fal
     plt.show()
 
 
+def plot_similarity_matrix(region_similarity_matrix: np.ndarray, dates: List[Tuple[str, str]], info_dict: Dict[str, Any], regions: List[str]):
+    """
+    Plot the similarity matrix for the regions.
 
+    Parameters:
+        region_similarity_matrix (np.ndarray): The similarity matrix for the regions. The shape should be (num_dates, num_regions, num_regions).
+        dates (List[Tuple[str, str]]): The list of date tuples.
+        info_dict (Dict[str, Any]): The dictionary containing the information about the similarity matrix.
+        regions (List[str]): The list of regions.
+    """
+    # create the figure
+    fig = plt.figure(figsize=(20,10))
+    # create the axis
+    ax = fig.add_subplot(111)
+    # transform the dates into the first date of each tuple
+    dates_start = [date[0] for date in dates]
+ 
+    # plot the lines
+    for i in range(region_similarity_matrix.shape[1]):
+        for j in range(region_similarity_matrix.shape[2]):
+            if i != j:
+                ax.plot(dates_start, region_similarity_matrix[:, i, j], label=f"{regions[i]} - {regions[j]}")
+    # set the x axis
+    ax.set_xticks(dates_start)
+    ax.xaxis.set_major_locator(mdates.MonthLocator(interval=4))
+
+    # find the min and max of the values
+    min_value = np.min(region_similarity_matrix)
+    max_value = np.max(region_similarity_matrix)
+    # set the y axis min and max of the values
+    ax.set_yticks(np.arange(min_value, max_value, (max_value-min_value)/10).round(2))
+    # set the y axis labels
+    ax.set_yticklabels(np.arange(min_value, max_value, (max_value-min_value)/10).round(2))
+    # set a descriptive title that includes the period, aggreagate mode (daily, weekly, monthly, yearly) and the difference function
+    # strip the timestamp from the dates, they are stored as timestamp objects
+    dates_start = [date[0].strftime("%Y-%m-%d") for date in dates]
+    ax.set_title(f"The similarity for the regions between {dates_start[0]} and {dates_start[-1]} using {info_dict['mode']} aggregate mode and {info_dict['similarity_function']} similarity function")
+     
+    # set the legend
+    #ax.legend()
+    # show the plot
+    plt.show()
+
+def plot_similarity_matrix_from_file(filename: str):
+    """
+    Plot the similarity matrix for the regions from the specified file.
+
+    Parameters:
+        filename (str): The filename of the similarity matrix.
+    """
+    # load the similarity matrix
+    dictionary = np.load(filename, allow_pickle=True).item()
+    plot_similarity_matrix(dictionary['similarity_matrix'], dictionary['dates'], dictionary['info_dict'], dictionary['region_array'])
 
 def save_current_plot(filename):
     """
