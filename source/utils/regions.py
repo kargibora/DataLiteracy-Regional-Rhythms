@@ -122,20 +122,13 @@ def calculate_popularity_metrics(regional_df : pd.DataFrame,
     # Calculate stream proportion for each day
     date_filtered_df['stream_proportion'] = date_filtered_df.groupby('date')['streams'].transform(lambda x: x / x.sum())
     
-    # Initialize dictionaries to store popularity and average stream proportion
-    popularities = {}
-    stream_proportion_average = {}
-    
     # Calculate popularity and stream proportion average for each track
-    for track_id in tqdm.tqdm(date_filtered_df['track_id'].unique(), desc=f"Calculating metrics for {region} between {date[0]} and {date[1]}"):
-        track_df = date_filtered_df[date_filtered_df['track_id'] == track_id]
-        score = track_df[track_df["rank"] <= delta_k].shape[0]
-        stream_proportion_average[track_id] = track_df[track_df["rank"] <= delta_k]['stream_proportion'].mean() if score > 0 else 0
-        popularities[track_id] = score
-    
+    popularities = date_filtered_df[date_filtered_df["rank"] <= delta_k].groupby('track_id').size()
+    stream_proportion_average = date_filtered_df[date_filtered_df["rank"] <= delta_k].groupby('track_id')['stream_proportion'].mean()
+
     # Map the calculated metrics back to the DataFrame
-    date_filtered_df['popularity'] = date_filtered_df['track_id'].map(popularities)
-    date_filtered_df['average_stream_proportion'] = date_filtered_df['track_id'].map(stream_proportion_average)
+    date_filtered_df['popularity'] = date_filtered_df['track_id'].map(popularities).fillna(0)
+    date_filtered_df['average_stream_proportion'] = date_filtered_df['track_id'].map(stream_proportion_average).fillna(0)
     
     return date_filtered_df
 
