@@ -137,9 +137,6 @@ def plot_popularity_rank_correlation(charts_df : pd.DataFrame,
         test_df_unique.sort_values('weighted_popularity', ascending=False, inplace=True)
         test_df_unique.reset_index(inplace=True)
 
-        # Get the top 5 tracks
-        test_df_unique.head(5)
-
         # Compare the two lists and their rankings
         x = []  
         y = []

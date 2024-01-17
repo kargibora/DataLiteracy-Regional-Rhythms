@@ -3,11 +3,12 @@ This utility file contains functions to work with regional dataframes.
 Regional dataframes is defined as the chart dataframe that is filtered by a single region.
 """
 
-from typing import Union, Tuple, Optional, Dict
+from typing import Union, Tuple, Optional, Dict,List
 import pandas as pd
 import tqdm
 from .charts import get_charts_by_date, get_charts_by_region
 from .datetime import datetime_start_end_generator
+from scipy.stats import kendalltau, spearmanr, pearsonr
 
 def _assert_regional_df(df : pd.DataFrame):
     assert 'region' in df.columns, "The dataframe should have a 'region' column"
@@ -27,7 +28,7 @@ def assert_regional_wrapper(func):
 def get_regional_charts_delta_rank(regional_df : pd.DataFrame,
                                    date : Union[str, Tuple[str,str]],
                                    operation : str = 'sum',
-                                   normalize_streams : bool = True) -> pd.DataFrame:
+                                   normalize_streams : bool = False) -> pd.DataFrame:
     """
     Transform daily data to weekly data by summing or averaging the streams. Delta rank is defined as
     the ranking of a track between a date range.  Use :operation: to specify whether to sum or average
@@ -151,3 +152,36 @@ def calculate_popularity_metrics_delta(
         weekly_popularity['weighted_popularity'] = weekly_popularity['popularity'] * weekly_popularity['average_stream_proportion']
         weekly_dict[start_date] = weekly_popularity
     return weekly_dict
+
+def get_popularity_rank_correlation(regional_df : pd.DataFrame,
+                                    k : int,
+                                    date_range : Tuple[str, str] = ('2017-01-01', '2017-12-31')):
+        
+        test_df_yearly = get_regional_charts_delta_rank(
+            regional_df,
+            date = date_range,
+            normalize_streams=False)
+
+        test_df_popularity = calculate_popularity_metrics(
+            regional_df,
+            date_range,
+            delta_k = k,
+        )
+
+        test_df_unique = test_df_popularity.drop_duplicates(subset="track_id", inplace=False)
+        test_df_unique['weighted_popularity'] = test_df_unique['popularity'] * test_df_unique['average_stream_proportion']
+
+        # sort by popularity
+        test_df_unique.sort_values('weighted_popularity', ascending=False, inplace=True)
+        test_df_unique.reset_index(inplace=True)
+
+        # Compare the two lists and their rankings
+        x = []  
+        y = []
+        for track_id in test_df_unique["track_id"].unique():
+            x.append(test_df_unique[test_df_unique["track_id"] == track_id]["weighted_popularity"].values[0])
+            y.append(test_df_yearly[test_df_yearly["track_id"] == track_id]["delta_rank"].values[0])
+
+        return pearsonr(x, y), spearmanr(x, y),kendalltau(x, y)
+
+
