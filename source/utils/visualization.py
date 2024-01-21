@@ -31,6 +31,12 @@ def setup_plotting_icml2022(**bundles_kwargs):
     plt.rcParams['savefig.format'] = '.pdf'
     plt.rcParams["savefig.directory"] = SAVE_DIR
 
+def reset_plottings(**kwargs):
+    plt.close('all')
+    setup_plotting_icml2022(
+        **kwargs
+    )
+    
 
 def plot_multiple_tracks_time_series(dfs, x_column, y_column, labels, title='Time Series Plot', xlabel='Date', ylabel='Value', ax=None, marker_every=5):
     """
