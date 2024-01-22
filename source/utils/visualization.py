@@ -7,7 +7,6 @@ from tueplots.constants.color import rgb
 import pandas as pd
 import numpy as np
 import os
-import tqdm
 from scipy.stats import kendalltau, spearmanr, pearsonr
 from typing import List, Tuple
 

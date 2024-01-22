@@ -14,8 +14,6 @@ def _assert_regional_df(df : pd.DataFrame):
     assert 'region' in df.columns, "The dataframe should have a 'region' column"
     assert 'date' in df.columns, "The dataframe should have a 'date' column"
     assert 'track_id' in df.columns, "The dataframe should have a 'track_id' column"
-    assert 'streams' in df.columns, "The dataframe should have a 'streams' column"
-    assert 'rank' in df.columns, "The dataframe should have a 'rank' column"
     assert df['region'].nunique() == 1, "The regional dataframe should be filtered by a single region"
 
 def assert_regional_wrapper(func):
@@ -81,8 +79,17 @@ def get_regional_charts_delta_rank(regional_df : pd.DataFrame,
 @assert_regional_wrapper
 def calculate_regional_popularity(regional_df : pd.DataFrame, delta_k : int = 10):
     """
-    Given the regional dataframe, calculate the popularity score of each track. If weight for each track_id is given,
-    calculate the weighted popularity score.
+    Calculate the popularity score of each track in a regional dataframe.
+
+    This function calculates the popularity score for each unique track in the provided dataframe.
+    The popularity score for a track is defined as the number of times the track's rank is less than or equal to delta_k.
+
+    Parameters:
+    regional_df (pd.DataFrame): The DataFrame containing the regional data. It must contain 'track_id' and 'rank' columns.
+    delta_k (int, optional): The rank threshold for calculating popularity scores. Only ranks less than or equal to delta_k are considered. Defaults to 10.
+
+    Returns:
+    dict: A dictionary where the keys are track IDs and the values are the calculated popularity scores for each track.
     """
     popularities = {}
 
@@ -145,6 +152,22 @@ def calculate_popularity_metrics_delta(
         delta_k : int,
         delta_t : int = 6,
 ):
+    """
+    Calculate the change in popularity metrics over a specified date range.
+
+    This function calculates the popularity metrics for each time period within the specified date range,
+    and then calculates the weighted popularity by multiplying the popularity by the average stream proportion.
+    The results are stored in a dictionary where the keys are the start dates of each time period.
+
+    Parameters:
+    regional_df (pd.DataFrame): The DataFrame containing the regional data.
+    date_range (Tuple[str, str]): A tuple containing the start and end dates of the range to calculate the metrics for.
+    delta_k (int): The number of top tracks to consider when calculating the popularity metrics.
+    delta_t (int, optional): The length of each time period within the date range, in days. Defaults to 6.
+
+    Returns:
+    dict: A dictionary where the keys are the start dates of each time period, and the values are DataFrames containing the popularity metrics for that time period.
+    """
     datetime_generator =  datetime_start_end_generator(date_range[0], date_range[1], delta_t)
     weekly_dict = {}
     for start_date, end_date in datetime_generator:
@@ -157,6 +180,22 @@ def calculate_popularity_metrics_delta(
 def get_popularity_rank_correlation(regional_df : pd.DataFrame,
                                     k : int,
                                     date_range : Tuple[str, str] = ('2017-01-01', '2017-12-31')):
+        """
+        Calculate the correlation between popularity and rank change for a given date range.
+
+        This function calculates the popularity metrics for each track within the specified date range,
+        and then calculates the weighted popularity by multiplying the popularity by the average stream proportion.
+        It then sorts the tracks by weighted popularity and compares the rankings with the delta rank from the regional charts.
+        The results are the Pearson, Spearman, and Kendall Tau correlation coefficients between the weighted popularity and delta rank.
+
+        Parameters:
+        regional_df (pd.DataFrame): The DataFrame containing the regional data.
+        k (int): The number of top tracks to consider when calculating the popularity metrics.
+        date_range (Tuple[str, str], optional): A tuple containing the start and end dates of the range to calculate the metrics for. Defaults to ('2017-01-01', '2017-12-31').
+
+        Returns:
+        tuple: A tuple containing the Pearson, Spearman, and Kendall Tau correlation coefficients between the weighted popularity and delta rank.
+        """
         
         test_df_yearly = get_regional_charts_delta_rank(
             regional_df,
