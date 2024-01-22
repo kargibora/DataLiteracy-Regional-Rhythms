@@ -21,3 +21,16 @@ def convert_date_to_datetime(df : pd.DataFrame, date_only : bool = False):
         df["date"] = df["date"].dt.date
     return df
 
+
+def audio_feature_to_label(feature_name : str):
+    """
+    Transform a name into a label by removing the '_' and capitalizing the first letters
+    """
+    feature_name = feature_name.strip()
+    return " ".join([s.capitalize() for s in feature_name.split('_')])
+
+
+if __name__ == "__main__":        
+    assert audio_feature_to_label('mfcc') == 'Mfcc'
+    assert audio_feature_to_label('spectral_centroid') == 'Spectral Centroid'
+    assert audio_feature_to_label(' spectral_rolloff') == 'Spectral Rolloff'

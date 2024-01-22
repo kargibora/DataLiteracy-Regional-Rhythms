@@ -153,6 +153,7 @@ def calculate_popularity_metrics_delta(
         weekly_dict[start_date] = weekly_popularity
     return weekly_dict
 
+@assert_regional_wrapper
 def get_popularity_rank_correlation(regional_df : pd.DataFrame,
                                     k : int,
                                     date_range : Tuple[str, str] = ('2017-01-01', '2017-12-31')):
