@@ -7,6 +7,9 @@ from typing import Union, Tuple, Optional, Dict, List, Any
 import pandas as pd
 import numpy as np
 import tqdm
+from sklearn.cluster import KMeans
+from collections import Counter
+
 from .charts import get_charts_by_date, get_charts_by_region
 from .datetime import datetime_start_end_generator
 
@@ -23,6 +26,60 @@ def assert_regional_wrapper(func):
         _assert_regional_df(args[0])
         return func(*args, **kwargs)
     return wrapper
+
+@assert_regional_wrapper
+def get_regional_charts_delta_rank(regional_df : pd.DataFrame,
+                                   date : Union[str, Tuple[str,str]],
+                                   operation : str = 'sum',
+                                   normalize_streams : bool = False) -> pd.DataFrame:
+    """
+    Transform daily data to weekly data by summing or averaging the streams. Delta rank is defined as
+    the ranking of a track between a date range.  Use :operation: to specify whether to sum or average
+    the streams. Use :normalize_streams: to normalize the streams between 0 and 1.
+
+    Parameters:
+        df (pd.DataFrame): The dataframe to filter. Should be the charts dataframe
+        date (str or tuple): The date or the tuple of dates to filter the dataframe
+        operation (str): The operation to perform on the streams. Either 'mean' or 'sum'
+        normalize_streams (bool): Whether to normalize the streams between 0 and 1
+
+    Returns:
+        pd.DataFrame: The filtered dataframe
+
+    Note:
+    - This function should be used for a region subset of the dataframe.
+    """
+
+
+    # This should be a view and should not change the original df
+    df = regional_df.copy()
+    df = get_charts_by_date(df, date)
+    if operation == 'mean':
+        df_group = df.groupby(['track_id']).mean().reset_index()
+    elif operation == 'sum':
+        df_group = df.groupby(['track_id']).sum().reset_index()
+    else:
+        raise ValueError("Operation should be either 'mean' or 'sum'")
+    
+    # Sort the tracks by streams to get the rankings
+    df_group = df_group.sort_values(by=['streams'], ascending=False).reset_index()
+
+    # Assign the new rankings
+    df_group['delta_rank'] = df_group.index + 1
+    df_group.drop(columns=['rank'], inplace=True)
+    
+    # Merge the two dataframes to get the title and artist
+    df_group = df_group.merge(df.drop(columns=['rank','streams']), on='track_id', how='left')
+
+    # Remove duplicates will look same after we merge the two dataframes
+    df_group = df_group.drop_duplicates(subset=['track_id'])
+
+
+    # Normalize the streams between 0 and 1
+    if normalize_streams:
+        df_group['streams'] = (df_group['streams'] - df_group['streams'].min()) / (df_group['streams'].max() - df_group['streams'].min())
+
+    return df_group
 
 def get_regional_weekly_charts_ranking(df : pd.DataFrame, date : Union[str, Tuple[str,str]], operation : str = 'sum', normalize_streams : bool = True) -> pd.DataFrame:
     """
@@ -167,6 +224,40 @@ def get_region_influence_ranking(similarity_matrix : np.ndarray, regions : List[
     # sort the dataframe by the influence
     df = df.sort_values(by=['influence'], ascending=False).reset_index(drop=True)
     return df
+
+def k_means_clustering(similarity_matrix : np.ndarray, regions : List[str], num_clusters : int) -> Dict[int, List[str]]:
+    """
+    Perform k-means clustering on the similarity matrix.
+
+    Parameters:
+        similarity_matrix (np.ndarray): The similarity matrix for the regions. The shape should be (num_dates, num_regions, num_regions).
+        num_clusters (int): The number of clusters to create.
+    
+    Returns:
+        Dict[int, List[str]]: The dictionary containing the cluster number and the list of regions in the cluster.
+    """
+
+    # find the average similarity matrix across the dates for each region
+    similarity_matrix_mean = np.mean(similarity_matrix, axis=0)
+
+    # perform k-means clustering
+    kmeans = KMeans(n_clusters=num_clusters, random_state=0)
+    kmeans.fit(similarity_matrix_mean)
+    cluster_labels = kmeans.predict(similarity_matrix_mean)
+
+    # Create a dictionary mapping country names to cluster labels
+    cluster_dict = dict(zip(regions, cluster_labels))
+
+    # Count the occurrences of each cluster label
+    cluster_counts = Counter(cluster_labels)
+
+    # Print the length of each cluster
+    for cluster_label, count in cluster_counts.items():
+        print(f"Cluster {cluster_label}: {count}")
+
+    return cluster_dict
+
+    
 
 @assert_regional_wrapper
 def calculate_popularity_metrics_delta(

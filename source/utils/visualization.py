@@ -8,13 +8,13 @@ import pandas as pd
 import numpy as np
 import os
 import matplotlib.dates as mdates
+from shapely.geometry import LineString
 from typing import Tuple, List, Dict, Any
 from scipy.stats import kendalltau, spearmanr, pearsonr
+import geopandas as gpd
 
 from .regions import get_charts_by_region, get_regional_charts_delta_rank, calculate_popularity_metrics
 from .tracks import get_track_title
-
-SAVE_DIR = '../../figures/'
 
 
 def setup_plotting_icml2022(**bundles_kwargs):
@@ -29,7 +29,110 @@ def setup_plotting_icml2022(**bundles_kwargs):
     # Update the plt savefig path
     plt.rcParams['savefig.dpi'] = 300
     plt.rcParams['savefig.format'] = '.pdf'
-    plt.rcParams["savefig.directory"] = SAVE_DIR
+
+
+def plot_world_map(world: gpd.GeoDataFrame, column: str, title: str, figures_path: str) -> None:
+    """
+    Plot the world map.
+
+    Parameters:
+        world (gpd.GeoDataFrame): The GeoDataFrame containing the world map data.
+        column (str): The column name for the map data.
+        title (str): The title of the plot.
+    
+    Returns:
+        None
+    """
+
+    plt.rcParams['savefig.dpi'] = 300
+
+    fig, ax = plt.subplots(1, figsize=(20, 10))
+    ax.axis('off')
+    ax.set_title(title, fontdict={'fontsize': '25', 'fontweight': '3'})
+    world.plot(column=column, cmap='OrRd', linewidth=0.8, ax=ax, edgecolor='0.8', legend=True, 
+               missing_kwds={
+        "label": "Missing values",
+        "color": "lightgrey"
+    },)
+    plt.savefig(os.path.join(figures_path, "region_similarity_map.pdf"), bbox_inches='tight', format='pdf')
+    plt.show()
+
+# plot the world map with different colors for each cluster use contrasting colors
+def plot_cluster_map(world: gpd.GeoDataFrame, column: str, title: str, figures_path: str) -> None:
+    """"
+    Plot the world map with different colors for each cluster.
+
+    Parameters:
+        world (gpd.GeoDataFrame): The GeoDataFrame containing the world map data.
+        column (str): The column name for the map data.
+        title (str): The title of the plot.
+
+    Returns:
+        None
+    """
+
+    plt.rcParams['savefig.dpi'] = 300
+
+    fig, ax = plt.subplots(1, figsize=(20, 10))
+    ax.axis('off')
+    ax.set_title(title, fontdict={'fontsize': '25', 'fontweight': '3'})
+    world.plot(column=column, cmap='viridis', linewidth=0.8, ax=ax, edgecolor='0.8', legend=True, 
+               missing_kwds={
+        "label": "Missing values",
+        "color": "lightgrey"
+    },)
+    plt.savefig(os.path.join(figures_path, "cluster_map.pdf"), bbox_inches='tight')
+    plt.show()
+
+# method to draw lines between all countries depending on the mean of the similarity matrix along axis 0. The lines should be thicker if the average similarity is higher
+def plot_lines_between_countries(world: gpd.GeoDataFrame, column: str, similarity_matrix: np.ndarray, title: str, region_array: List[Any], figures_path: str) -> None:
+    """
+    Plot the lines between the countries based on the similarity matrix.
+
+    Parameters:
+        world (gpd.GeoDataFrame): The GeoDataFrame containing the world map data.
+        column (str): The column name for the map data.
+        similarity_matrix (np.ndarray): The similarity matrix for the regions. The shape should be (num_dates, num_regions, num_regions).
+        title (str): The title of the plot.
+        region_array (List[Any]): The list of regions.
+
+    Returns:
+        None
+    """
+
+    plt.rcParams.update(plt.rcParamsDefault)
+
+    plt.rcParams['savefig.dpi'] = 300
+ 
+    geometry = []
+    thickness = []
+
+    # loop over the similarity matrix
+    for i in range(similarity_matrix.shape[1]):
+        for j in range(similarity_matrix.shape[2]):
+            if i != j:
+                # get the mean of the similarity matrix along axis 0
+                mean_similarity = np.mean(similarity_matrix[:, i, j])
+                # get the geometry of the line between the two countries
+                geometry.append(LineString([world.to_crs('+proj=cea')[world['name'] == region_array[i]]['geometry'].centroid.to_crs(world.crs).values[0], world.to_crs('+proj=cea')[world['name'] == region_array[j]]['geometry'].centroid.to_crs(world.crs).values[0]]))
+                # get the thickness of the line between the two countries
+                thickness.append(mean_similarity / 10)
+
+    fig, ax = plt.subplots(1, figsize=(20, 10))
+    ax.axis('off')
+    ax.set_title(title, fontdict={'fontsize': '25', 'fontweight': '3'})
+    world.plot(column=column, cmap='OrRd', linewidth=0.8, ax=ax, edgecolor='0.8', legend=True, 
+               missing_kwds={
+        "label": "Missing values",
+        "color": "lightgrey"
+    },)
+
+    # plot the lines between the countries
+    gdf = gpd.GeoDataFrame(geometry=geometry)
+    gdf['thickness'] = thickness
+    gdf.plot(ax=ax, color='black', linewidth=gdf['thickness']*1.5)
+    plt.savefig(os.path.join(figures_path, "similarity_lines.pdf"), bbox_inches='tight', format='pdf')
+    plt.show()
 
 
 def plot_multiple_tracks_time_series(dfs, x_column, y_column, labels, title='Time Series Plot', xlabel='Date', ylabel='Value', ax=None, marker_every=5):
@@ -178,7 +281,7 @@ def plot_popularity_rank_correlation(charts_df : pd.DataFrame,
     plt.legend(fontsize=12)  # Increase the font size of the legend
 
 
-def plot_similarity_matrix(region_similarity_matrix: np.ndarray, dates: List[Tuple[str, str]], info_dict: Dict[str, Any], regions: List[str]):
+def plot_similarity_matrix(region_similarity_matrix: np.ndarray, dates: List[Tuple[str, str]], info_dict: Dict[str, Any], regions: List[str], figures_path : str = None) -> None:
     """
     Plot the similarity matrix for the regions.
 
@@ -187,7 +290,12 @@ def plot_similarity_matrix(region_similarity_matrix: np.ndarray, dates: List[Tup
         dates (List[Tuple[str, str]]): The list of date tuples.
         info_dict (Dict[str, Any]): The dictionary containing the information about the similarity matrix.
         regions (List[str]): The list of regions.
+
+    Returns:
+        None
+
     """
+    plt.rcParams.update(plt.rcParamsDefault)
     # create the figure
     fig = plt.figure(figsize=(20,10))
     # create the axis
@@ -219,24 +327,34 @@ def plot_similarity_matrix(region_similarity_matrix: np.ndarray, dates: List[Tup
     # set the legend
     #ax.legend()
     # show the plot
+    
+    if figures_path is not None:
+        plt.savefig(os.path.join(figures_path, f"similarity_across_time_{info_dict['similarity_function']}.pdf"), bbox_inches='tight')
     plt.show()
 
-def plot_similarity_matrix_from_file(filename: str):
+def plot_similarity_matrix_from_file(filename: str, figures_path: str) -> None:
     """
     Plot the similarity matrix for the regions from the specified file.
 
     Parameters:
         filename (str): The filename of the similarity matrix.
+
+    Returns:
+        None
     """
+    plt.rcParams.update(plt.rcParamsDefault)
+
+    plt.rcParams['savefig.dpi'] = 300
+
     # load the similarity matrix
     dictionary = np.load(filename, allow_pickle=True).item()
-    plot_similarity_matrix(dictionary['similarity_matrix'], dictionary['dates'], dictionary['info_dict'], dictionary['region_array'])
+    plot_similarity_matrix(dictionary['similarity_matrix'], dictionary['dates'], dictionary['info_dict'], dictionary['region_array'], figures_path)
 
 def plot_popular_tracks_time_series(charts_df: pd.DataFrame, region: str, date_range: str, delta_k: int) -> None:
     """
     Plots the time series of popular tracks based on the given parameters.
 
-    Args:
+    Parameters:
         charts_df (pd.DataFrame): The DataFrame containing the charts data.
         region (str): The region for which the analysis is performed.
         date_range (str): The date range for the analysis.
