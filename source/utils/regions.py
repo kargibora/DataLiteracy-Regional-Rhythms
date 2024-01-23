@@ -16,11 +16,21 @@ def _assert_regional_df(df : pd.DataFrame):
     assert 'track_id' in df.columns, "The dataframe should have a 'track_id' column"
     assert df['region'].nunique() == 1, "The regional dataframe should be filtered by a single region"
 
+def _assert_daily_df(df : pd.DataFrame):
+    assert df['date'].nunique == 1, 'The dataframe required by this function should only span a single day'
+
 def assert_regional_wrapper(func):
     def wrapper(*args, **kwargs):
         _assert_regional_df(args[0])
         return func(*args, **kwargs)
     return wrapper
+
+def assert_daily_wrapper(func):
+    def wrapper(*args, **kwargs):
+        _assert_daily_df(args[0])
+        return func(*args, **kwargs)
+    return wrapper
+
 
 @assert_regional_wrapper
 def get_regional_charts_delta_rank(regional_df : pd.DataFrame,
@@ -130,10 +140,13 @@ def calculate_popularity_metrics(regional_df : pd.DataFrame,
     """
     # Filter the DataFrame for the given region and date range
     date_filtered_df = get_charts_by_date(regional_df, date)
-    region = regional_df['region'].unique()[0]
+
+    if date_filtered_df.empty:
+        return date_filtered_df
 
     # Calculate stream proportion for each day
     date_filtered_df['stream_proportion'] = date_filtered_df.groupby('date')['streams'].transform(lambda x: x / x.sum())
+    date_filtered_df['streams'] = date_filtered_df.groupby('date')['streams'].sum()
     
     # Calculate popularity and stream proportion average for each track
     popularities = date_filtered_df[date_filtered_df["rank"] <= delta_k].groupby('track_id').size()
@@ -225,3 +238,33 @@ def get_popularity_rank_correlation(regional_df : pd.DataFrame,
         return pearsonr(x, y), spearmanr(x, y),kendalltau(x, y)
 
 
+def get_chart_delta_feature_vector(regional_df : pd.DataFrame, audio_df : pd.DataFrame, date : Tuple[str,str]):
+    """
+    Collect delta-day information and create a single feature vector for each 
+    """
+    regional_df = calculate_popularity_metrics(regional_df, date)
+
+    if regional_df.empty:
+        return None
+    
+    total_days = regional_df["stream_proportion"].sum()
+
+    # Join the audio_df to the charts_df
+    regional_df = regional_df.merge(audio_df, on="track_id", how="left")
+
+    # Drop the duplicate columns and sum the stream proportions to create a weight
+    regional_df_stream_proportion_sum = regional_df.groupby("track_id")["stream_proportion"].sum()/total_days
+    regional_df.drop_duplicates(subset=["track_id"], inplace=True)
+    regional_df["stream_proportion"] = regional_df_stream_proportion_sum.values
+
+    # Return the stream_proportion * audio_features
+    audio_features_columns = audio_df.columns.drop(["track_id"])
+
+    for col in audio_features_columns:
+        regional_df[col] = regional_df["stream_proportion"] * regional_df[col]
+
+    # Sum the audio features to get a single row
+    audio_feature_vector = regional_df[audio_features_columns].sum(axis=0)
+
+    # Return audio features as a vector
+    return audio_feature_vector

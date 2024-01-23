@@ -228,20 +228,9 @@ def plot_popular_tracks_time_series(charts_df: pd.DataFrame, region: str, date_r
             marker_every=5  # Show a marker every 5 points
         )
 
-    # save_current_plot(f"time_series_plot_{region}_delta_{delta_k}.png")
-
     # Make the legends smaller
     for ax in axs:
         ax.legend(fontsize='small')
     plt.tight_layout()
     plt.show()
-
-def save_current_plot(filename):
-    """
-    Save the current plot to the specified filename.
-
-    Parameters:
-        filename (str): The filename to save the plot to.
-    """
-    plt.savefig(os.path.join(SAVE_DIR,filename), bbox_inches='tight')
 
