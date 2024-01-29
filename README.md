@@ -8,14 +8,22 @@ Exploratory data analysis on the Spotify Audio features, leveraging data from th
 
 ---
 ## Installation
-After installing the repository, please adjust the folder structure as follows by moving dataset files into the `dataset` folder.:
+
+**TODO:** Requirements & env. setup
+
+If you would like to run the scripts that collects data from Spotify API, please create a `.env` file in the ```source``` directory and add your Spotify API key:
+
+``` TODO example```
+
+After installing the repository, move the related dataset files into the `data` folder, resulting in a file structure as follows:
+
 ```
 Data Literacy Project
 ├── data
 │   ├── audio_features.csv
 │   ├── charts_preprocessed.csv
-|   └─────────────────
-├── env
+│   ├── ...
+│   └─────────────────
 ├── exp
 │   ├── data_audio_features.ipynb
 │   ├── data_exploration.ipynb
@@ -27,7 +35,11 @@ Data Literacy Project
 │   ├── data_visualization.ipynb
 │   └─────────────────
 ├── figures
+│   ├── ...
+│   └─────────────────
 ├── output
+│   ├── ...
+│   └─────────────────
 ├── source
 │   ├── utils
 │   ├── .env
@@ -39,7 +51,7 @@ Data Literacy Project
 └─────────────────
 ```
 
-If you want to run the scripts to collect data from Spotify API, please create a `.env` file in the ```source``` directory and add your Spotify API key.
+We also present our processed data in the `data` folder as a convenience, which are explained further in the folder's [README file](./data/README.md).
 
 
 ## About
