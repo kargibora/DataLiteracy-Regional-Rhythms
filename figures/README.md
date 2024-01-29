@@ -88,4 +88,4 @@ The thickness of the lines between the countries represents the similarity value
 
 This is a cluster map with 4 clusters using K-Means clustering using the pair-wise distances from the previous plot.
 
-[Reproduction code](..\exp\regional_similarity_visualization.ipynb "regional similarity visualization notebook")
+[Reproduction code](../exp/regional_similarity_visualization.ipynb "regional similarity visualization notebook")
