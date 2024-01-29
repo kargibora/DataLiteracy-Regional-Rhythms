@@ -74,10 +74,12 @@ def get_regional_charts_delta_rank(
     # This should be a view and should not change the original df
     df = regional_df.copy()
     df = get_charts_by_date(df, date)
-    if operation == "mean":
-        df_group = df.groupby(["track_id"]).mean().reset_index()
-    elif operation == "sum":
-        df_group = df.groupby(["track_id"]).sum().reset_index()
+    df.drop(columns=['date'], inplace=True)
+
+    if operation == 'mean':
+        df_group = df.groupby(['track_id']).mean().reset_index()
+    elif operation == 'sum':
+        df_group = df.groupby(['track_id']).sum().reset_index()
     else:
         raise ValueError("Operation should be either 'mean' or 'sum'")
 
@@ -191,11 +193,9 @@ def calculate_regional_popularity(regional_df: pd.DataFrame, delta_k: int = 10):
 
     return popularities
 
-
-@assert_regional_wrapper
-def calculate_popularity_metrics(
-    regional_df: pd.DataFrame, date: Tuple[str, str], delta_k: int = 200
-) -> pd.DataFrame:
+def calculate_popularity_metrics(regional_df : pd.DataFrame,
+                                 date : Tuple[str, str],
+                                 delta_k: int = 200) -> pd.DataFrame:
     """
     Calculate popularity metrics for tracks within a specific region and date range.
 

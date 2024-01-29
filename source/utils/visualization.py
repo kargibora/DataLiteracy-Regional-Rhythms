@@ -24,16 +24,9 @@ def setup_plotting_icml2022(**bundles_kwargs):
     """
     Set up the plotting environment.
     """
-
-    plt.rcParams.update(
-        bundles.icml2022(
-            **bundles_kwargs,
-        )
-    )
-
-    # Update the plt savefig path
-    plt.rcParams["savefig.dpi"] = 300
-    plt.rcParams["savefig.format"] = ".pdf"
+    plt.rcParams.update(bundles.icml2022(
+        **bundles_kwargs,
+    ))
 
 
 def plot_world_map(
