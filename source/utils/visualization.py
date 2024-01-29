@@ -4,11 +4,13 @@ import seaborn as sns
 from tueplots import bundles
 from tueplots.constants.color import rgb
 
-import pandas as pd
 import numpy as np
-import os
-from scipy.stats import kendalltau, spearmanr, pearsonr
 import geopandas as gpd
+import pandas as pd
+from scipy.stats import kendalltau, spearmanr, pearsonr
+
+import os
+from typing import Any, Dict, List, Tuple
 
 from .regions import (
     get_charts_by_region,
