@@ -59,6 +59,8 @@ def get_regional_charts_delta_rank(regional_df : pd.DataFrame,
     # This should be a view and should not change the original df
     df = regional_df.copy()
     df = get_charts_by_date(df, date)
+    df.drop(columns=['date'], inplace=True)
+
     if operation == 'mean':
         df_group = df.groupby(['track_id']).mean().reset_index()
     elif operation == 'sum':
@@ -78,8 +80,7 @@ def get_regional_charts_delta_rank(regional_df : pd.DataFrame,
 
     # Remove duplicates will look same after we merge the two dataframes
     df_group = df_group.drop_duplicates(subset=['track_id'])
-
-
+    
     # Normalize the streams between 0 and 1
     if normalize_streams:
         df_group['streams'] = (df_group['streams'] - df_group['streams'].min()) / (df_group['streams'].max() - df_group['streams'].min())
@@ -115,7 +116,6 @@ def calculate_regional_popularity(regional_df : pd.DataFrame, delta_k : int = 10
 
     return popularities
 
-@assert_regional_wrapper
 def calculate_popularity_metrics(regional_df : pd.DataFrame,
                                  date : Tuple[str, str],
                                  delta_k: int = 200) -> pd.DataFrame:

@@ -13,22 +13,16 @@ from typing import List, Tuple
 from .regions import get_charts_by_region, get_regional_charts_delta_rank,calculate_popularity_metrics
 from .tracks import get_track_title
 
-SAVE_DIR = '../../figures/'
-
 
 def setup_plotting_icml2022(**bundles_kwargs):
     """
     Set up the plotting environment.
     """
-    
     plt.rcParams.update(bundles.icml2022(
         **bundles_kwargs,
     ))
 
-    # Update the plt savefig path
-    plt.rcParams['savefig.dpi'] = 300
-    plt.rcParams['savefig.format'] = '.pdf'
-    plt.rcParams["savefig.directory"] = SAVE_DIR
+
 
 def reset_plottings(**kwargs):
     plt.close('all')
