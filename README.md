@@ -58,15 +58,11 @@ If you use Conda, you may need to install the additional package to be able to u
 $ conda install nb_conda_kernels
 ```
 
-4. Download the required datasets and place them into data/ folder:
+4. Download the required datasets:
   * [Spotify-API-AudioFeatures](https://drive.google.com/file/d/1pV3qGu01t87YfwytPc7yR7lXROiKYL8t/view?usp=sharing)
   * [Charts](https://drive.google.com/file/d/1AiTYbA8ZZK5A3xydtF4VigT49VgOVbHi/view?usp=sharing)
 
-5. If you would like to run the scripts that collects data from Spotify API, please create a `.env` file in the `source/` directory and add your Spotify API key:
-
-```
-API_KEY="Spotify API Key goes here"
-```
+5. If you would like to run the scripts that collects data from Spotify API, please create a `.env` file in the `source/` directory and add your Spotify related credentials for using Spotify API. Please head to the following [link](https://developer.spotify.com/documentation/web-api/tutorials/getting-started) to see how to get Spotify credentials.
 
 6. Move the related dataset files into the `data/` folder, resulting in a file structure as follows:
 
