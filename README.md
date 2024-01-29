@@ -30,6 +30,14 @@ $ conda create --name regional_rhythms python=3.10
 $ conda activate regional_rhythms
 ```
 
+Alternatively, you can directly create a new envrionment copying ours instead (though it may fail if your system is not compatible with all specified versions described in the file):
+
+```
+$ conda env create -f env/conda_env.yaml
+```
+
+If you wish to install this environment, skip to step 4 after installation.
+
 2. Install pip if you haven't in order to install the requirements:
 
 Example installation in a Conda environment:
@@ -41,12 +49,14 @@ $ conda install pip
 3. Install the requirements:
 
 ```
-$ pip install -r requirements.txt
+$ pip install -r env/requirements.txt
 ```
 
 If you use Conda, you may need to install the additional package to be able to use the environment as a kernel in Jupyter Notebook:
 
-```$ conda install nb_conda_kernels```
+```
+$ conda install nb_conda_kernels
+```
 
 4. Download the required datasets:
   * [Spotify-API-AudioFeatures](https://drive.google.com/file/d/1pV3qGu01t87YfwytPc7yR7lXROiKYL8t/view?usp=sharing)
@@ -65,6 +75,9 @@ Data Literacy Project
 ├── data
 │   ├── audio_features.csv
 │   ├── charts_preprocessed.csv
+│   ├── ...
+│   └─────────────────
+├── env
 │   ├── ...
 │   └─────────────────
 ├── exp
