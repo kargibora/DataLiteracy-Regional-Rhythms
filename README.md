@@ -44,6 +44,10 @@ $ conda install pip
 $ pip install -r requirements.txt
 ```
 
+If you use Conda, you may need to install the additional package to be able to use the environment as a kernel in Jupyter Notebook:
+
+```$ conda install nb_conda_kernels```
+
 4. Download the required datasets:
   * [Spotify-API-AudioFeatures](https://drive.google.com/file/d/1pV3qGu01t87YfwytPc7yR7lXROiKYL8t/view?usp=sharing)
   * [Charts](https://drive.google.com/file/d/1AiTYbA8ZZK5A3xydtF4VigT49VgOVbHi/view?usp=sharing)
@@ -90,10 +94,18 @@ Data Literacy Project
 └─────────────────
 ```
 
-The `.ipynb` files under `exp/` can now be executed.
+The `.ipynb` files under `exp/` can now be executed. To ensure that relative paths work, scripts should be executed from inside the directory:
+
+```
+$ jupyter-notebook exp/example_script.ipynb
+```
 
 ## Appendix
 
 We present our obtained plots under the `figures/` directory. The directory includes additional plots to those included in the report, along with their explanations in a [README file](./figures/README.md).
 
 We also present our processed data in the `data/` folder as a convenience, which are explained further in the folder's [README file](./data/README.md).
+
+## License
+
+[Roboto](https://fonts.google.com/specimen/Roboto/about) fonts included in this repository are licensed under the Apache License, Version 2.0.
