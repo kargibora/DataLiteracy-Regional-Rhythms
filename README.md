@@ -1,7 +1,7 @@
 # Regional Rhythms: Spotify Audio Feature Analysis
 Exploratory data analysis on the Spotify Audio features, leveraging data from the Spotify Charts Dataset and Spotify API.
 
-[Project Report](https://docs.google.com/presentation/d/1b3KoCJx0uqqGDglQFD5NmYRAvNCMSOsmYpgOXCDUPgo/edit#slide=id.g19f02095231_2_98)
+[Project Report](./paper/Regional_Rhythms_Report.pdf)
 
 ---
 ## About
@@ -86,17 +86,13 @@ Data Literacy Project
 │   ├── data_regional_correlations.ipynb
 │   ├── data_visualization.ipynb
 │   └─────────────────
-├── figures
-│   ├── ...
-│   └─────────────────
-├── output
-│   ├── ...
-│   └─────────────────
 ├── source
 │   ├── utils
 │   ├── .env
 │   ├── build_dataset.py
 │   └─────────────────
+...
+│
 ├── .gitignore
 ├── requirements.txt
 ├── README.md
